@@ -1,10 +1,14 @@
 import express from "express";
 import crypto from "crypto";
 import { prisma } from "@repo/db";
+import { UserSchema,signToken } from "@repo/comman";
 import { Request,Response } from "express";
+import cookieParser from "cookie-parser";
+import { authMiddleware } from "./middleware";
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 const PORT = process.env.PORT || 3000;
 
 
@@ -25,9 +29,14 @@ const hashPassword = (password:string) => {
 app.post("/signup", async(req: Request, res: Response) => {
   try {
 
-    const {username, email, name, password} = req.body;
-    if (!username || !email || !name || !password) {
+    const {username, password} = req.body;
+    if (!username || !password) {
       return res.status(400).json({ error: "All fields are required" });
+    }
+    // Validate user input using Zod schema
+    const parsedUser = UserSchema.safeParse({ username, password });
+    if (!parsedUser.success) {
+      return res.status(400).json({ error: "Invalid input" });
     }
     const hashedPassword = hashPassword(password);
     // Check if user already exists
@@ -56,17 +65,34 @@ app.post("/login", async (req: Request, res: Response) => {
     if (!username || !password) {
       return res.status(400).json({ error: "All fields are required" });
     }
+    // Validate user input using Zod schema
+    const parsedUser = UserSchema.safeParse({ username, password });
+    if (!parsedUser.success) {
+      return res.status(400).json({ error: "Invalid input" });
+    }
+    // Check if user exists
     const user = await prisma.user.findUnique({
       where: { username },
     });
+    // If user does not exist or password is incorrect
     if (!user) {
       return res.status(400).json({ error: "Invalid credentials" });
     }
+    // Compare password (assuming you have a hashPassword function)
+    // Here we assume the password is stored as a hash in the database
     const isValidPassword = user.password === hashPassword(password);
     if (!isValidPassword) {
       return res.status(400).json({ error: "Invalid credentials" });
     }
-    res.status(200).json({ message: "Login successful", user });
+    const token = signToken(user);
+    // Set the token in a cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+      path: "/",
+      
+    });
+    res.status(200).json({ message: "Login successful", user, token });
   } catch (error) {
     console.error("Error during login:", error);
     res.status(500).json({ error: "Internal server error" });
