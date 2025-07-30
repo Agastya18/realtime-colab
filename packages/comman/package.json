@@ -1,5 +1,5 @@
 {
-  "name": "server",
+  "name": "@repo/comman",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -13,15 +13,16 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@repo/comman": "workspace:*",
-    "@repo/db": "workspace:*",
-    "@types/express": "^5.0.3",
-    "@types/node": "^22.15.3",
-    "express": "^5.1.0",
-    "tsx": "^4.20.3"
+    "@types/jsonwebtoken": "^9.0.10",
+    "jsonwebtoken": "^9.0.2",
+    "tsx": "^4.20.3",
+    "zod": "^4.0.14"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "typescript": "^5.8.3"
-  }
+  },
+   "exports": {
+      ".": "./src/index.ts"
+    }
 }
