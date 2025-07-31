@@ -11,7 +11,8 @@ declare global {
 }
 
 export const authMiddleware = (req:Request, res: Response, next: NextFunction) => {
-  const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+  const token = req.cookies.token  || req.headers.authorization?.split(" ")[1] || req.query.token;
+  console.log("Token:", token);
   if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
   }
@@ -20,6 +21,7 @@ export const authMiddleware = (req:Request, res: Response, next: NextFunction) =
     return res.status(401).json({ error: "Unauthorized" });
   }
   req.user = user;
+ // console.log("reasdadadasd---",req.user);
   next();
 };
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {

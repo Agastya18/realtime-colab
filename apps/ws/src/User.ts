@@ -24,7 +24,7 @@ export class User {
 
     // Method to join a room
 
-    listener(): void {
+   private listener(): void {
         this.ws.on("message",async (data) => {
 
             let parseData: parseData;

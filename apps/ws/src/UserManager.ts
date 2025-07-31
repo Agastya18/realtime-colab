@@ -1,10 +1,6 @@
 
 import { WebSocket } from "ws";
-interface User {
-    ws: WebSocket;
-    rooms: string[]; // Array to store room IDs the user is part of
-    // Add any other user-related properties if needed
-}
+import { User } from "./User";
 interface parseData {
     type: "joinRoom" | "leaveRoom" | "sendMessage";
     userId: string; // Added userId to identify the user
@@ -31,9 +27,11 @@ interface parseData {
     }
     addUser(id: string, ws: WebSocket): void {
     
-        const user: User = { ws, rooms: [] }; // Initialize with an empty rooms array
+        const user = new User(id, ws);
         this.users.set(id, user);
-        console.log(`User ${id} added`);
+        console.log(`User id: ${id} added`);
+
+        console.log("Current users with values:", Array.from(this.users.entries()).map(([key, value]) => ({ key, value })));
         // Set up WebSocket event listeners for the user
         this.OnCloseRemove(id, ws);
     }
@@ -43,9 +41,10 @@ interface parseData {
           // Handle user disconnection logic here
         if (this.users.has(id)) {
             this.users.delete(id);
-            console.log(`User ${id} disconnected`);
+             console.log("Current users with values:", Array.from(this.users.entries()).map(([key, value]) => ({ key, value })));
+            console.log(`User id: ${id} disconnected`);
         } else {
-            console.log(`User ${id} not found`);
+            console.log(`User id: ${id} not found`);
         }
        });
     }
@@ -59,7 +58,11 @@ interface parseData {
         const user = this.getUser(parseData.userId);
         if (user) {
             user.rooms.push(parseData.roomId);
-            console.log(`User ${parseData.userId} joined room ${parseData.roomId}`);
+          //  console.log(`User ${parseData.userId} joined room ${parseData.roomId}`);
+            // get the rooms array
+         console.log("Current users with values:", Array.from(this.users.entries()).map(([key, value]) => ({ key, value })));
+
+            console.log(`User ${parseData.userId} is now in rooms: ${user.rooms.join(", ")}`);
         }
     }
 
@@ -67,7 +70,12 @@ interface parseData {
         const user = this.getUser(parseData.userId);
         if (user) {
             user.rooms = user.rooms.filter(roomId => roomId !== parseData.roomId);
-            console.log(`User ${parseData.userId} left room ${parseData.roomId}`);
+          //  console.log(`User ${parseData.userId} left room ${parseData.roomId}`);
+            // get the rooms array
+          console.log("Current users with values:", Array.from(this.users.entries()).map(([key, value]) => ({ key, value })));
+
+            console.log(`User ${parseData.userId} is now in rooms: ${user.rooms.join(", ")}`);
+           
         }
     }
       handleChatMessage(parseData: any): void {
@@ -82,10 +90,25 @@ interface parseData {
             console.error(`User ${parseData.userId} is not in room ${parseData.roomId}`);
             return;
         }
-        // first save the message to the database
-        // Then broadcast the message to all users in the room
         // Broadcast the message to all users in the room
+        this.broadcastMessageToRoom(parseData.roomId, parseData.message || "");
+        console.log(`User ${parseData.userId} sent message to room ${parseData.roomId}: ${parseData.message}`);
+        // Log the current users and their rooms
+        this.users.forEach((user, id) => {
+            console.log(`User ${id} is in rooms: ${user.rooms.join(", ")}`);
+        });
     }
+
+    broadcastMessageToRoom(roomId: string, message: string): void {
+        for (const user of this.users.values()) {
+            if (user.rooms.includes(roomId)) {
+                user.ws.send(JSON.stringify({ type: "message", roomId, message }));
+            }
+        }
+        console.log(`Broadcasted message to room ${roomId}: ${message}`);
+    }
+
+  
 
     }
 

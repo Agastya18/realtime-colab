@@ -28,7 +28,7 @@ const hashPassword = (password:string) => {
 
 app.post("/signup", async(req: Request, res: Response) => {
   try {
-
+   // console.log("Received signup request");
     const {username, password} = req.body;
     if (!username || !password) {
       return res.status(400).json({ error: "All fields are required" });
@@ -40,6 +40,7 @@ app.post("/signup", async(req: Request, res: Response) => {
     }
     const hashedPassword = hashPassword(password);
     // Check if user already exists
+  //  console.log("reacehd ehre")
     const existingUser = await prisma.user.findUnique({
       where: { username },
     });
@@ -110,7 +111,7 @@ app.post("/logout", (req: Request, res: Response) => {
 });
 
 
-app.post("/rooms", authMiddleware, async (req: Request, res: Response) => {
+app.post("/room", authMiddleware, async (req: Request, res: Response) => {
   try {
     const { name } = req.body;
     if (!name) {
@@ -136,7 +137,7 @@ app.post("/rooms", authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
-app.get("/chat:roomId", authMiddleware, async (req: Request, res: Response) => {
+app.get("/chat/:roomId", authMiddleware, async (req: Request, res: Response) => {
   try {
    
     const roomId = Number(req.params.roomId);
