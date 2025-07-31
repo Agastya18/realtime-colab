@@ -19,9 +19,13 @@ export const CreateRoomSchema = z.object({
 
 // now we can create a function to  to sign a JWT token using user id
 export const signToken = (user: { id: string }) => {
-  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET    || "default_secret", {
-    expiresIn: "1h",
-  });
+  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET    || "default_secret");
+
+  // what is the output structure of the function with example?
+    // Example output:
+    // {
+    //   "id": "user_id"
+    // }
   return token;
 };
 

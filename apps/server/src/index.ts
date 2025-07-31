@@ -1,7 +1,7 @@
 import express from "express";
 import crypto from "crypto";
 import { prisma } from "@repo/db";
-import { UserSchema,signToken } from "@repo/comman";
+import { UserSchema,signToken,CreateRoomSchema } from "@repo/comman";
 import { Request,Response } from "express";
 import cookieParser from "cookie-parser";
 import { authMiddleware } from "./middleware";
@@ -99,6 +99,93 @@ app.post("/login", async (req: Request, res: Response) => {
   }
 });
 
+app.post("/logout", (req: Request, res: Response) => {
+  try {
+    res.clearCookie("token");
+    res.status(200).json({ message: "Logout successful" });
+  } catch (error) {
+    console.error("Error during logout:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+app.post("/rooms", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { name } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: "Room name is required" });
+    }
+
+    // Validate room name using Zod schema
+    const parsedRoom = CreateRoomSchema.safeParse({ name });
+    if (!parsedRoom.success) {
+      return res.status(400).json({ error: "Invalid room name" });
+    }
+    // Create the room
+    const room = await prisma.room.create({
+      data: {
+        slug: parsedRoom.data.name,
+       adminId: req.user.id, // Assuming req.user is set by authMiddleware
+      },
+    });
+    res.status(201).json({ message: "Room created successfully", room });
+  } catch (error) {
+    console.error("Error creating room:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/chat:roomId", authMiddleware, async (req: Request, res: Response) => {
+  try {
+   
+    const roomId = Number(req.params.roomId);
+    if (!roomId) {
+      return res.status(400).json({ error: "Room ID is required" });
+    }
+    // Fetch the room and its messages
+    const messages = await prisma.chat.findMany({
+      where: { roomId },
+      // get last 50 messages
+      orderBy: { id: "desc" },
+      take: 50,
+     
+    });
+    res.status(200).json({ messages });
+  } catch (error) {
+    console.error("Error fetching room:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/room/:slug",authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.params;
+    
+    // Find the room by slug    
+    const room = await prisma.room.findUnique({
+      where: { slug },
+    });
+    res.status(200).json({ room });
+  } catch (error) {
+    console.error("Error creating chat message:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+});
+
+process.on("SIGINT", () => {
+  console.log("Shutting down server...");
+  prisma.$disconnect()
+    .then(() => {
+      console.log("Prisma client disconnected");
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error("Error disconnecting Prisma client:", error);
+      process.exit(1);
+    });
 });
