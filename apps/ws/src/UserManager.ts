@@ -3,7 +3,7 @@ import { WebSocket } from "ws";
 import { User } from "./User";
 import { prisma } from "@repo/db";
 interface parseData {
-    type: "joinRoom" | "leaveRoom" | "sendMessage";
+    type: "joinRoom" | "leaveRoom" | "chat";
     userId: string; // Added userId to identify the user
     roomId: string;
     message?: string; // Optional for chat messages
@@ -91,13 +91,13 @@ interface parseData {
             console.error(`User ${parseData.userId} is not in room ${parseData.roomId}`);
             return;
         }
-        await prisma.chat.create({
-            data: {
-                userId: parseData.userId,
-                roomId: Number(parseData.roomId),
-                message: parseData.message || "",
-            },
-        })
+        // await prisma.chat.create({
+        //     data: {
+        //         userId: parseData.userId,
+        //         roomId: Number(parseData.roomId),
+        //         message: parseData.message || "",
+        //     },
+        // })
         // Broadcast the message to all users in the room
         this.broadcastMessageToRoom(parseData.roomId, parseData.message || "");
         console.log(`User ${parseData.userId} sent message to room ${parseData.roomId}: ${parseData.message}`);

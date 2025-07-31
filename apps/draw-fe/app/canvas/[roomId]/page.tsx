@@ -1,9 +1,9 @@
 import Canvas from "@/components/Canvas";
 
-const RoomPage: React.FC = () => {
+const RoomPage: React.FC = ({params}: {params: {roomId: string}}) => {
   return (
     <div>
-      <h1>Room ID: [roomId]</h1>
+      <h1>Room ID: {params.roomId}</h1>
       <Canvas />
     </div>
   );

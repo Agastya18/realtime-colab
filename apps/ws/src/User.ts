@@ -3,7 +3,7 @@ import { UserManager } from "./UserManager";
 import {  WebSocket } from "ws";
 
 interface parseData {
-    type: "joinRoom" | "leaveRoom" | "sendMessage";
+    type: "joinRoom" | "leaveRoom" | "chat";
     userId: string; // Added userId to identify the user
     roomId: string;
     message?: string; // Optional for chat messages
@@ -34,7 +34,8 @@ export class User {
                 console.error("Error parsing message:", error);
                 return;
             }
-
+            parseData.userId = this.id; // Ensure userId is set from the User instance
+console.log("Received message:", parseData);
             switch (parseData.type) {
                 case "joinRoom":
                    UserManager.getInstance().JoinRoom(parseData);
@@ -42,7 +43,7 @@ export class User {
                 case "leaveRoom":
                    UserManager.getInstance().leaveRoom(parseData);
                     break;
-                case "sendMessage":
+                case "chat":
                    UserManager.getInstance().handleChatMessage(parseData);
                     break;
                 default:

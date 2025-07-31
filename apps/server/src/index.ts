@@ -4,12 +4,19 @@ import { prisma } from "@repo/db";
 import { UserSchema,signToken,CreateRoomSchema } from "@repo/comman";
 import { Request,Response } from "express";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import { authMiddleware } from "./middleware";
 const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
-const PORT = process.env.PORT || 3000;
+app.use(cors(
+  {
+    origin: "http://localhost:3000", // Adjust this to your frontend URL
+    credentials: true, // Allow cookies to be sent
+  }
+));
+const PORT = process.env.PORT || 4000;
 
 
 
@@ -28,7 +35,7 @@ const hashPassword = (password:string) => {
 
 app.post("/signup", async(req: Request, res: Response) => {
   try {
-   // console.log("Received signup request");
+    console.log("Received signup request");
     const {username, password} = req.body;
     if (!username || !password) {
       return res.status(400).json({ error: "All fields are required" });
