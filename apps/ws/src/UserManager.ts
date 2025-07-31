@@ -1,6 +1,7 @@
 
 import { WebSocket } from "ws";
 import { User } from "./User";
+import { prisma } from "@repo/db";
 interface parseData {
     type: "joinRoom" | "leaveRoom" | "sendMessage";
     userId: string; // Added userId to identify the user
@@ -78,7 +79,7 @@ interface parseData {
            
         }
     }
-      handleChatMessage(parseData: any): void {
+      async handleChatMessage(parseData: parseData): Promise<void> {
        // first check if the user exists
         const user = this.getUser(parseData.userId);
         if (!user) {
@@ -90,6 +91,13 @@ interface parseData {
             console.error(`User ${parseData.userId} is not in room ${parseData.roomId}`);
             return;
         }
+        await prisma.chat.create({
+            data: {
+                userId: parseData.userId,
+                roomId: Number(parseData.roomId),
+                message: parseData.message || "",
+            },
+        })
         // Broadcast the message to all users in the room
         this.broadcastMessageToRoom(parseData.roomId, parseData.message || "");
         console.log(`User ${parseData.userId} sent message to room ${parseData.roomId}: ${parseData.message}`);
